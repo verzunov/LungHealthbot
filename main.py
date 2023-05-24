@@ -18,6 +18,7 @@ bot.
 import logging
 
 from telegram import __version__ as TG_VER
+import keras
 
 try:
     from telegram import __version_info__
@@ -32,6 +33,15 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
     )
 from telegram import ForceReply, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+
+import os
+from dotenv import load_dotenv
+from io import BytesIO
+import numpy as np
+
+load_dotenv()
+
+TOKEN = os.getenv('TOKEN')
 
 # Enable logging
 logging.basicConfig(
@@ -50,7 +60,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ForceReply(selective=True),
     )
 
+async def version_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(keras.__version__)
 
+async def upload_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    message = update.message
+    if message.photo:
+        # Телеграмм отправляет фото в различных размерах, мы возьмем самое большое
+        photo = message.photo[-1]
+        print(dir(photo))
+        print(type(photo))
+        await update.message.reply_text('Image received and saved')
+    
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
     await update.message.reply_text("Help!")
@@ -69,6 +90,8 @@ def main() -> None:
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("version", version_command))
+    application.add_handler(MessageHandler(filters.ALL, upload_image))
 
     # on non command i.e message - echo the message on Telegram
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))

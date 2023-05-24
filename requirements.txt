@@ -1,1 +1,6 @@
+pip
+setuptools 
+wheel
 python-telegram-bot
+tensorflow
+python-dotenv
