@@ -38,11 +38,15 @@ import os
 from dotenv import load_dotenv
 from io import BytesIO
 import numpy as np
-
+from keras.preprocessing import image
+from keras import utils
+from tensorflow import keras
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 
+model = keras.models.load_model('lung')
+print(dir(model))
 # Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -63,6 +67,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def version_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(keras.__version__)
 
+def load_image(img, H=320, W=320):
+    """Load and preprocess image."""
+    img_path = img
+    #mean, std = get_mean_std_per_batch(img_path, df, H=H, W=W)
+    x = utils.load_img(img_path, target_size=(H, W))
+
+    return np.array(x).reshape((1 ,H, W, 3))
+
+
 async def upload_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.message
     if message.photo:
@@ -70,7 +83,12 @@ async def upload_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         photo = message.photo[-1]
         file = await context.bot.getFile(photo.file_id)
         await file.download_to_drive("test.jpg")
-        await update.message.reply_text('Image received and saved')
+        f=load_image("test.jpg")
+        print(f.shape)
+        res=model.predict(f)
+        p=res[0][0]
+        print(res)
+        await update.message.reply_text(f"Вероятность туберкулеза - {p}")
     
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
