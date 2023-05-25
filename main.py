@@ -68,8 +68,8 @@ async def upload_image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if message.photo:
         # Телеграмм отправляет фото в различных размерах, мы возьмем самое большое
         photo = message.photo[-1]
-        print(dir(photo))
-        print(type(photo))
+        file = await context.bot.getFile(photo.file_id)
+        await file.download_to_drive("test.jpg")
         await update.message.reply_text('Image received and saved')
     
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
